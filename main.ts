@@ -8,12 +8,25 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const ENTRY =
-  "ERROR: Food still cold in the middle. I heated the plate instead. The plate was not hungry.";
+  "ERROR: Food still cold in the middle. I heated the plate instead. The plate was not hungry, but it is warm now.";
 
-// The competition requires a single line of 1 to 200 characters.
-if (ENTRY.length < 1 || ENTRY.length > 200 || ENTRY.includes("\n")) {
-  throw new Error(`Entry must be one line of 1-200 characters, got ${ENTRY.length}`);
+// The competition requires a single line of 1 to 200 UTF-8 characters,
+// not whitespace only. Count code points (not UTF-16 units or bytes) so
+// multi-byte characters are measured the way the limit intends.
+function validateEntry(entry: string): void {
+  const chars = [...entry];
+  if (chars.length < 1 || chars.length > 200) {
+    throw new Error(`Entry must be 1-200 characters, got ${chars.length}`);
+  }
+  if (entry.trim().length === 0) {
+    throw new Error("Entry must not be whitespace only");
+  }
+  if (entry.includes("\n") || entry.includes("\r")) {
+    throw new Error("Entry must be a single line");
+  }
 }
+
+validateEntry(ENTRY);
 
 const outDir = process.env.OUTPUT_DIR ?? "/output";
 const outPath = join(outDir, "entry.txt");
